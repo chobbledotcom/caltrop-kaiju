@@ -111,12 +111,22 @@ export type LocationState = {
 };
 
 // =============================================================================
-// Special Location Starting Positions
+// Special Location Placement
 // =============================================================================
+
+/**
+ * Constraint for where a special location can be randomly placed.
+ * null means "any row/col", a specific value pins it.
+ */
+export type PlacementConstraint = {
+  readonly row: Row | null;
+  readonly col: Col | null;
+};
 
 export type SpecialLocationConfig = {
   readonly type: SpecialLocationType;
-  readonly position: Position;
+  /** Where this location can be placed on the grid */
+  readonly placement: PlacementConstraint;
   /** Starting destruction level (docks starts at 1) */
   readonly initialDestruction: DestructionLevel;
 };

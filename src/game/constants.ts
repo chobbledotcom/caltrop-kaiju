@@ -1,9 +1,7 @@
 import type {
-  Col,
   CompassDirection,
   D44,
   DirectionDelta,
-  Position,
   Row,
   SpecialLocationConfig,
 } from "./types.ts";
@@ -12,28 +10,28 @@ import type {
 // Map Dimensions
 // =============================================================================
 
-export const MAP_ROWS: Row = 6 as Row;
-export const MAP_COLS: Col = 6 as Col;
 export const MAP_SIZE = 7;
 
 // =============================================================================
-// Starting Positions
+// Special Location Placement Constraints
 // =============================================================================
 
-export const PLAYER_START: Position = { row: 0 as Row, col: 3 as Col };
-export const KAIJU_START: Position = { row: 6 as Row, col: 3 as Col };
-
-// =============================================================================
-// Special Location Configurations
-// =============================================================================
-
+/**
+ * Each special location has constraints on where it can be randomly placed.
+ * - mountains: must be in the north row (row 0) — player's home
+ * - docks: must be in the south row (row 6) — where kaiju lands
+ * - telecom_tower, nuclear_plant, city_hall, bridge: anywhere not already taken
+ *
+ * Player always starts at the mountains position.
+ * Kaiju always starts at the docks position.
+ */
 export const SPECIAL_LOCATIONS: readonly SpecialLocationConfig[] = [
-  { type: "mountains", position: { row: 0 as Row, col: 3 as Col }, initialDestruction: 0 },
-  { type: "telecom_tower", position: { row: 1 as Row, col: 5 as Col }, initialDestruction: 0 },
-  { type: "nuclear_plant", position: { row: 2 as Row, col: 0 as Col }, initialDestruction: 0 },
-  { type: "city_hall", position: { row: 5 as Row, col: 1 as Col }, initialDestruction: 0 },
-  { type: "bridge", position: { row: 5 as Row, col: 5 as Col }, initialDestruction: 0 },
-  { type: "docks", position: { row: 6 as Row, col: 3 as Col }, initialDestruction: 1 },
+  { type: "mountains", placement: { row: 0 as Row, col: null }, initialDestruction: 0 },
+  { type: "docks", placement: { row: 6 as Row, col: null }, initialDestruction: 1 },
+  { type: "telecom_tower", placement: { row: null, col: null }, initialDestruction: 0 },
+  { type: "nuclear_plant", placement: { row: null, col: null }, initialDestruction: 0 },
+  { type: "city_hall", placement: { row: null, col: null }, initialDestruction: 0 },
+  { type: "bridge", placement: { row: null, col: null }, initialDestruction: 0 },
 ];
 
 // =============================================================================

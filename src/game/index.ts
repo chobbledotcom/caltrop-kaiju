@@ -12,6 +12,7 @@ export type {
   SpecialLocationType,
   SpecialLocation,
   LocationState,
+  PlacementConstraint,
   SpecialLocationConfig,
   BridgeSide,
   BridgeState,
@@ -37,8 +38,6 @@ export type {
 
 export {
   MAP_SIZE,
-  PLAYER_START,
-  KAIJU_START,
   SPECIAL_LOCATIONS,
   DIRECTION_DELTAS,
   D44_DIRECTION_TABLE,
