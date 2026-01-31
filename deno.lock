@@ -909,8 +909,7 @@
   "workspace": {
     "dependencies": [
       "jsr:@std/assert@1",
-      "jsr:@std/path@1",
-      "npm:@libsql/client@0.17"
+      "jsr:@std/path@1"
     ],
     "packageJson": {
       "dependencies": [

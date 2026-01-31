@@ -204,12 +204,6 @@ describe("code quality", () => {
       "fp/index.ts", // FP utility library
       "lib/jsx/jsx-runtime.ts", // JSX compiler runtime
       "lib/jsx/jsx-dev-runtime.ts", // JSX dev runtime
-      "lib/crypto.ts", // Crypto utility library
-      "lib/logger.ts", // Logging utility library
-      "lib/db/client.ts", // Database client library
-      "lib/db/table.ts", // Database table abstraction
-      "lib/forms.tsx", // Form handling library
-      "routes/utils.ts", // Route utility library
     ];
 
     /** Index modules that only re-export from sub-modules */
@@ -219,12 +213,7 @@ describe("code quality", () => {
      * Test hooks - functions that are intentionally exported for test setup/cleanup.
      * Format: "file:exportName"
      */
-    const ALLOWED_TEST_HOOKS: string[] = [
-      // Database injection for test isolation
-      "lib/db/client.ts:setDb",
-      // Reset cached encryption key between tests
-      "lib/crypto.ts:clearEncryptionKeyCache",
-    ];
+    const ALLOWED_TEST_HOOKS: string[] = [];
 
     /**
      * Patterns to extract exported symbols from source files.
