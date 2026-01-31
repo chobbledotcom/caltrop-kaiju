@@ -46,15 +46,27 @@ const applyWoundOrDie = (state: GameState, events: TurnEvent[]): boolean => {
   return died;
 };
 
+// =============================================================================
+// Turn Plan - separates player action from kaiju movement for animation
+// =============================================================================
+
+export type TurnPlan = {
+  readonly kaijuDirection: CompassDirection;
+  readonly kaijuPath: Position[];
+  readonly playerEvents: TurnEvent[];
+  readonly playerDiedEarly: boolean;
+};
+
 /**
- * Execute a full turn: player action → kaiju movement → resolve events.
- * Mutates game state in place and returns a TurnResult describing what happened.
+ * Execute the player's action and calculate the kaiju's movement plan.
+ * Mutates player state (position, wreckage wounds, bridge choice) but does NOT
+ * apply kaiju movement or destruction. Returns the plan for the kaiju's path.
  */
-export const executeTurn = (
+export const planTurn = (
   state: GameState,
   action: PlayerAction,
   dice: DiceProvider,
-): TurnResult => {
+): TurnPlan => {
   const events: TurnEvent[] = [];
 
   // --- Player movement ---
@@ -74,7 +86,7 @@ export const executeTurn = (
       events.push({ event: "wreckage_roll", outcome });
 
       if (outcome.type === "wounded" && applyWoundOrDie(state, events)) {
-        return finalizeTurn(state, action, "N", [], events);
+        return { kaijuDirection: "N", kaijuPath: [], playerEvents: events, playerDiedEarly: true };
       }
     }
   }
@@ -95,7 +107,7 @@ export const executeTurn = (
     // Still on center? Stay in mustChoose state
   }
 
-  // --- Kaiju movement ---
+  // --- Kaiju movement calculation ---
   let kaijuDirection: CompassDirection;
   let kaijuPath: Position[];
 
@@ -108,21 +120,21 @@ export const executeTurn = (
     kaijuPath = moveInLine(state.kaiju.position, kaijuDirection, KAIJU_SPEED_PHASE2);
   }
 
-  // Apply destruction for each square the kaiju passes through
-  for (const pos of kaijuPath) {
-    events.push(...applyKaijuDestruction(state, pos));
-    if (state.player.status === "dead") {
-      state.kaiju.position = pos;
-      return finalizeTurn(state, action, kaijuDirection, kaijuPath, events);
-    }
-  }
+  return { kaijuDirection, kaijuPath, playerEvents: events, playerDiedEarly: false };
+};
 
-  // Update kaiju position to final position
-  if (kaijuPath.length > 0) {
-    state.kaiju.position = kaijuPath[kaijuPath.length - 1]!;
-  }
+/**
+ * Resolve sighting, encounter, and search after all kaiju movement is complete.
+ * This should be called after all kaiju steps have been applied.
+ */
+export const resolvePostMovement = (
+  state: GameState,
+  action: PlayerAction,
+  kaijuPath: Position[],
+  dice: DiceProvider,
+): TurnEvent[] => {
+  const events: TurnEvent[] = [];
 
-  // --- Sighting / encounter detection ---
   if (state.phase.phase === "finding_kaiju") {
     // Check for sighting (kaiju path + player position)
     const sightingType = detectSighting(state.player.position, kaijuPath);
@@ -136,11 +148,11 @@ export const executeTurn = (
         state.player.status = "dead";
         state.player.deathCause = "killed_by_kaiju_sighting";
         events.push({ event: "player_killed", cause: "killed_by_kaiju_sighting" });
-        return finalizeTurn(state, action, kaijuDirection, kaijuPath, events);
+        return events;
       }
 
       if (wasWoundedBySighting(sightingEvent) && applyWoundOrDie(state, events)) {
-        return finalizeTurn(state, action, kaijuDirection, kaijuPath, events);
+        return events;
       }
 
       if (didLearnWeakness(sightingEvent)) {
@@ -160,7 +172,7 @@ export const executeTurn = (
         state.player.status = "dead";
         state.player.deathCause = "killed_by_kaiju_searching";
         events.push({ event: "player_killed", cause: "killed_by_kaiju_searching" });
-        return finalizeTurn(state, action, kaijuDirection, kaijuPath, events);
+        return events;
       }
     }
 
@@ -180,7 +192,33 @@ export const executeTurn = (
     }
   }
 
-  return finalizeTurn(state, action, kaijuDirection, kaijuPath, events);
+  return events;
+};
+
+/** Finalize turn: update counters and return result */
+export const completeTurn = (
+  state: GameState,
+  action: PlayerAction,
+  kaijuDirection: CompassDirection,
+  kaijuPath: Position[],
+  events: TurnEvent[],
+): TurnResult => {
+  // Update phase to defeat if player died
+  if (state.player.status === "dead" && state.player.deathCause) {
+    state.phase = { phase: "defeat", cause: state.player.deathCause };
+  }
+
+  state.turnNumber += 1;
+
+  const result: TurnResult = {
+    playerAction: action,
+    kaijuDirection,
+    kaijuPath,
+    events,
+  };
+
+  state.turnHistory.push(result);
+  return result;
 };
 
 /** Transition from finding_kaiju to searching_base */
@@ -261,30 +299,4 @@ const resolveVictory = (
   }
 
   return events;
-};
-
-/** Finalize turn: update counters and return result */
-const finalizeTurn = (
-  state: GameState,
-  action: PlayerAction,
-  kaijuDirection: CompassDirection,
-  kaijuPath: Position[],
-  events: TurnEvent[],
-): TurnResult => {
-  // Update phase to defeat if player died
-  if (state.player.status === "dead" && state.player.deathCause) {
-    state.phase = { phase: "defeat", cause: state.player.deathCause };
-  }
-
-  state.turnNumber += 1;
-
-  const result: TurnResult = {
-    playerAction: action,
-    kaijuDirection,
-    kaijuPath,
-    events,
-  };
-
-  state.turnHistory.push(result);
-  return result;
 };

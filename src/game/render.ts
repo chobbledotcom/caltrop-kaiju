@@ -1,5 +1,5 @@
 import { map } from "#fp";
-import { ICON_KAIJU, ICON_PLAYER, SPECIAL_ICONS } from "./assets.ts";
+import { ICON_KAIJU, ICON_PLAYER, ICON_SKULL, SPECIAL_ICONS } from "./assets.ts";
 import { MAP_SIZE } from "./constants.ts";
 import { getLocation, isSamePosition } from "./grid.ts";
 import { getValidPlayerMoves } from "./movement.ts";
@@ -68,7 +68,11 @@ const renderCell = (
     contents.push(`<span class="kaiju">${ICON_KAIJU}</span>`);
   }
   if (isPlayer) {
-    contents.push(`<span class="player">${ICON_PLAYER}</span>`);
+    if (state.player.status === "dead") {
+      contents.push(`<span class="player-dead">${ICON_SKULL}</span>`);
+    } else {
+      contents.push(`<span class="player">${ICON_PLAYER}</span>`);
+    }
   }
 
   if (loc.searchCount > 0) {
