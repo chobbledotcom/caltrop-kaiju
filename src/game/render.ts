@@ -1,4 +1,5 @@
 import { map } from "#fp";
+import { ICON_KAIJU, ICON_PLAYER, SPECIAL_ICONS } from "./assets.ts";
 import { MAP_SIZE } from "./constants.ts";
 import { getLocation, isSamePosition } from "./grid.ts";
 import { getValidPlayerMoves } from "./movement.ts";
@@ -9,15 +10,6 @@ import type {
   Position,
   TurnEvent,
 } from "./types.ts";
-
-const SPECIAL_LABELS: Record<string, string> = {
-  mountains: "\u26f0",
-  telecom_tower: "\ud83d\udce1",
-  nuclear_plant: "\u2622\ufe0f",
-  city_hall: "\ud83c\udfe0",
-  bridge: "\ud83c\udf09",
-  docks: "\u2693",
-};
 
 const DESTRUCTION_MARKS = ["", "\u2571", "\u2573", "\u2588"];
 
@@ -62,7 +54,8 @@ const renderCell = (
   const contents: string[] = [];
 
   if (loc.special) {
-    contents.push(`<span class="special-icon">${SPECIAL_LABELS[loc.special] ?? ""}</span>`);
+    const icon = SPECIAL_ICONS[loc.special] ?? "";
+    contents.push(`<span class="special-icon">${icon}</span>`);
   }
 
   if (destroyed) {
@@ -72,10 +65,10 @@ const renderCell = (
   }
 
   if (isKaiju) {
-    contents.push(`<span class="kaiju">K</span>`);
+    contents.push(`<span class="kaiju">${ICON_KAIJU}</span>`);
   }
   if (isPlayer) {
-    contents.push(`<span class="player">@</span>`);
+    contents.push(`<span class="player">${ICON_PLAYER}</span>`);
   }
 
   if (loc.searchCount > 0) {
