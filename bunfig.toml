@@ -1,0 +1,23 @@
+[test]
+preload = ["./test/ensure-deps.js", "./test/setup.js"]
+
+# Test file patterns
+root = "./test"
+
+# Timeout for individual tests (30 seconds)
+timeout = 30000
+
+# Always enable coverage reporting
+coverage = true
+
+# Coverage thresholds - tests fail if coverage drops below these levels
+coverageThreshold = { lines = 1.0, functions = 1.0 }
+
+# Files excluded from coverage:
+# - ensure-deps.js: defensive code that can't be meaningfully tested
+# - test-runner-utils.js, test-utils.js: test infrastructure
+coveragePathIgnorePatterns = [
+  "test/ensure-deps.js",
+  "test/test-runner-utils.js",
+  "test/test-utils.js",
+]

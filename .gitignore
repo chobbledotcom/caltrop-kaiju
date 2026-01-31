@@ -1,0 +1,33 @@
+# Logs
+logs
+*.log
+
+# Dependency directories
+node_modules
+node_modules/
+
+# Coverage
+coverage
+*.lcov
+
+# jscpd report directory
+.jscpd-report
+
+# TypeScript cache
+*.tsbuildinfo
+
+# dotenv environment variable files
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist
+build
+
+# Nix
+result
+result-*
+
+# Direnv
+.direnv

@@ -1,0 +1,23 @@
+{
+	"$schema": "https://unpkg.com/knip@5/schema.json",
+	"entry": [
+		"src/**/*.js",
+		"test/**/*.test.js",
+		"test/ensure-deps.js",
+		"test/setup.js",
+		"packages/js-toolkit/fp/index.js",
+		"packages/js-toolkit/test-utils/index.js",
+		"packages/js-toolkit/code-quality/index.js"
+	],
+	"project": ["**/*.{js,mjs}"],
+	"ignore": [
+		"packages/**"
+	],
+	"ignoreDependencies": [
+		"bun-types",
+		"happy-dom"
+	],
+	"ignoreBinaries": [],
+	"ignoreExportsUsedInFile": true,
+	"rules": {}
+}

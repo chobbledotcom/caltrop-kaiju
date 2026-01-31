@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ES2022",
+    "types": ["bun-types"],
+    "baseUrl": ".",
+    "paths": {
+      "#lib/*": ["./src/_lib/*"],
+      "#src/*": ["./src/*"],
+      "#test/*": ["./test/*"],
+      "#toolkit/*": ["./packages/js-toolkit/*"]
+    },
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*.js", "test/**/*.js", "packages/**/*.js"],
+  "exclude": ["node_modules", "coverage"]
+}
