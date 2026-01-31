@@ -245,12 +245,8 @@ const transitionToSearchPhase = (
  * Resolve victory: kaiju flees south, causing destruction.
  * If it passes through the player's square, resolve a final perilous encounter.
  */
-const resolveVictory = (
-  state: GameState,
-  dice: DiceProvider,
-): TurnEvent[] => {
-  const events: TurnEvent[] = [];
-  events.push({ event: "kaiju_flees" });
+const resolveVictory = (state: GameState, dice: DiceProvider): TurnEvent[] => {
+  const events: TurnEvent[] = [{ event: "kaiju_flees" }];
 
   // Kaiju flees directly south from current position to the bottom of the map
   const kaijuRow = state.kaiju.position.row;
