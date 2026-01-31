@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Caltrop Kaiju!</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Courier New", monospace;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+
+    #app {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    /* Start Screen */
+    .start-screen {
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+    .start-screen h1 {
+      font-size: 2.5rem;
+      color: #e94560;
+      margin-bottom: 1rem;
+    }
+    .start-screen p {
+      max-width: 500px;
+      margin: 0 auto 2rem;
+      line-height: 1.5;
+      color: #aaa;
+    }
+    .start-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .start-options button {
+      padding: 0.75rem 2rem;
+      font-family: inherit;
+      font-size: 1rem;
+      border: 2px solid #e94560;
+      background: transparent;
+      color: #e94560;
+      cursor: pointer;
+      min-width: 300px;
+    }
+    .start-options button:hover {
+      background: #e94560;
+      color: #1a1a2e;
+    }
+
+    /* Game Layout */
+    .game-screen { display: flex; flex-direction: column; gap: 0.75rem; }
+    .game-layout { display: flex; gap: 1rem; }
+    .side-panel { flex: 1; display: flex; flex-direction: column; gap: 0.75rem; min-width: 200px; }
+
+    /* Status Bar */
+    .status-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding: 0.5rem 0.75rem;
+      background: #16213e;
+      border: 1px solid #333;
+      font-size: 0.85rem;
+    }
+    .status-bar .health.alive { color: #4ecca3; }
+    .status-bar .health.wounded { color: #e94560; font-weight: bold; }
+    .status-bar .health.dead { color: #666; }
+    .status-bar .weakness-known { color: #f7d354; font-weight: bold; }
+    .status-bar .phase { color: #89c4e1; }
+
+    /* Grid */
+    .grid {
+      border-collapse: collapse;
+      border: 2px solid #444;
+    }
+    .grid td {
+      width: 56px;
+      height: 56px;
+      border: 1px solid #333;
+      text-align: center;
+      vertical-align: middle;
+      position: relative;
+      background: #16213e;
+      font-size: 0.8rem;
+    }
+    .grid td.dmg1 { background: #2a1f1f; }
+    .grid td.dmg2 { background: #3d1f1f; }
+    .grid td.destroyed {
+      background: #111;
+      color: #333;
+    }
+
+    .grid .special-icon {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      font-size: 0.7rem;
+      opacity: 0.7;
+    }
+    .grid .destruction-mark {
+      color: #e94560;
+      font-size: 0.7rem;
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+    }
+    .grid .searched {
+      color: #4ecca3;
+      font-size: 0.6rem;
+      position: absolute;
+      top: 2px;
+      right: 2px;
+    }
+
+    .grid .player {
+      color: #4ecca3;
+      font-weight: bold;
+      font-size: 1.3rem;
+    }
+    .grid .kaiju {
+      color: #e94560;
+      font-weight: bold;
+      font-size: 1.3rem;
+    }
+    .grid td.has-player { box-shadow: inset 0 0 8px #4ecca3; }
+    .grid td.has-kaiju { box-shadow: inset 0 0 8px #e94560; }
+
+    /* Controls */
+    .controls { text-align: center; }
+    .controls h2 { margin-bottom: 0.5rem; }
+    .controls.victory h2 { color: #4ecca3; }
+    .controls.defeat h2 { color: #e94560; }
+    .controls p { margin-bottom: 1rem; color: #aaa; font-size: 0.9rem; }
+
+    .move-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 48px);
+      gap: 4px;
+      justify-content: center;
+    }
+    .move-btn {
+      width: 48px;
+      height: 48px;
+      font-size: 1.2rem;
+      font-family: inherit;
+      border: 1px solid #444;
+      background: #16213e;
+      color: #e0e0e0;
+      cursor: pointer;
+    }
+    .move-btn:hover:not(:disabled) {
+      background: #4ecca3;
+      color: #1a1a2e;
+    }
+    .move-btn:disabled {
+      opacity: 0.2;
+      cursor: not-allowed;
+    }
+    .hold-btn {
+      border-color: #4ecca3;
+    }
+
+    #new-game {
+      padding: 0.5rem 1.5rem;
+      font-family: inherit;
+      font-size: 1rem;
+      border: 2px solid #e94560;
+      background: transparent;
+      color: #e94560;
+      cursor: pointer;
+    }
+    #new-game:hover {
+      background: #e94560;
+      color: #1a1a2e;
+    }
+
+    /* Log */
+    .log {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 350px;
+      padding: 0.5rem;
+      background: #0f0f23;
+      border: 1px solid #333;
+      font-size: 0.75rem;
+      line-height: 1.4;
+    }
+    .log-entry {
+      padding: 0.3rem 0;
+      border-bottom: 1px solid #222;
+    }
+    .log-entry strong { color: #89c4e1; }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .game-layout { flex-direction: column; }
+      .grid td { width: 44px; height: 44px; }
+      .move-grid { grid-template-columns: repeat(3, 40px); }
+      .move-btn { width: 40px; height: 40px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="dist/main.js"></script>
+</body>
+</html>
