@@ -1,4 +1,5 @@
 import type {
+  Col,
   CompassDirection,
   D44,
   DirectionDelta,
@@ -26,13 +27,16 @@ export const MAP_SIZE = 7;
  * Kaiju always starts at the docks position.
  */
 export const SPECIAL_LOCATIONS: readonly SpecialLocationConfig[] = [
-  { type: "mountains", placement: { row: 0 as Row, col: null }, initialDestruction: 0 },
-  { type: "docks", placement: { row: 6 as Row, col: null }, initialDestruction: 1 },
+  { type: "mountains", placement: { row: 0 as Row, col: 3 as Col }, initialDestruction: 0 },
+  { type: "docks", placement: { row: 6 as Row, col: 3 as Col }, initialDestruction: 1 },
   { type: "telecom_tower", placement: { row: null, col: null }, initialDestruction: 0 },
   { type: "nuclear_plant", placement: { row: null, col: null }, initialDestruction: 0 },
   { type: "city_hall", placement: { row: null, col: null }, initialDestruction: 0 },
   { type: "bridge", placement: { row: null, col: null }, initialDestruction: 0 },
 ];
+
+/** Minimum distance (Chebyshev/king-moves) between special locations */
+export const MIN_SPECIAL_LOCATION_DISTANCE = 2;
 
 // =============================================================================
 // Direction Deltas

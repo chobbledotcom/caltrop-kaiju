@@ -21,8 +21,9 @@ const makeLocation = (
   ...overrides,
 });
 
+// Mountains/docks fully pinned (0 dice). 4 unconstrained × 3 dice each = 12.
 const makeDice = () =>
-  createSequenceDice([1, 1, 2, 2, 3, 3, 4, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]);
+  createSequenceDice([1, 1, 2, 2, 3, 3, 4, 4, 1, 2, 3, 4]);
 
 const makeGameState = (): GameState => {
   const { grid } = createGrid(makeDice());

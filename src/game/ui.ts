@@ -1,5 +1,6 @@
 import { lazyRef } from "#fp";
 import { createRandomDice } from "./dice.ts";
+import { applyKaijuDestruction } from "./destruction.ts";
 import {
   renderControls,
   renderGrid,
@@ -14,19 +15,26 @@ import {
   loadGame,
   saveGame,
 } from "./state.ts";
-import { executeTurn } from "./turn.ts";
+import { planTurn, resolvePostMovement, completeTurn } from "./turn.ts";
 import type {
   CompassDirection,
   Difficulty,
   GameState,
   PlayerAction,
+  TurnEvent,
 } from "./types.ts";
 
+const KAIJU_STEP_DELAY = 300;
+
 const [getState, setState] = lazyRef<GameState | null>(() => null);
+const [getAnimating, setAnimating] = lazyRef<boolean>(() => false);
 const dice = createRandomDice();
 
 const $ = (selector: string): HTMLElement | null =>
   document.querySelector(selector);
+
+const animationPause = (ms: number): Promise<void> =>
+  new Promise((resolve) => { setTimeout(resolve, ms); });
 
 const render = (): void => {
   const state = getState();
@@ -51,15 +59,39 @@ const appendLog = (html: string): void => {
   }
 };
 
-const handleMove = (action: PlayerAction): void => {
+const handleMove = async (action: PlayerAction): Promise<void> => {
   const state = getState();
-  if (!state || isGameOver(state)) return;
+  if (!state || isGameOver(state) || getAnimating()) return;
 
-  const result = executeTurn(state, action, dice);
-  saveGame(state);
+  setAnimating(true);
+  try {
+    const plan = planTurn(state, action, dice);
+    const allEvents: TurnEvent[] = [...plan.playerEvents];
 
-  appendLog(renderTurnLog(result.events, state.turnNumber));
-  render();
+    if (!plan.playerDiedEarly) {
+      // Animate kaiju movement step by step
+      for (const pos of plan.kaijuPath) {
+        await animationPause(KAIJU_STEP_DELAY);
+        const stepEvents = applyKaijuDestruction(state, pos);
+        allEvents.push(...stepEvents);
+        state.kaiju.position = pos;
+        render();
+        if (state.player.status === "dead") break;
+      }
+
+      if (state.player.status !== "dead") {
+        const postEvents = resolvePostMovement(state, action, plan.kaijuPath, dice);
+        allEvents.push(...postEvents);
+      }
+    }
+
+    const result = completeTurn(state, action, plan.kaijuDirection, plan.kaijuPath, allEvents);
+    saveGame(state);
+    appendLog(renderTurnLog(result.events, state.turnNumber));
+    render();
+  } finally {
+    setAnimating(false);
+  }
 };
 
 const bindMoveButtons = (): void => {

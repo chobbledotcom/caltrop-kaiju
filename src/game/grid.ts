@@ -1,5 +1,5 @@
 import { filter, map, reduce } from "#fp";
-import { ALL_DIRECTIONS, DIRECTION_DELTAS, MAP_SIZE, SPECIAL_LOCATIONS } from "./constants.ts";
+import { ALL_DIRECTIONS, DIRECTION_DELTAS, MAP_SIZE, MIN_SPECIAL_LOCATION_DISTANCE, SPECIAL_LOCATIONS } from "./constants.ts";
 import type {
   Col,
   DiceProvider,
@@ -44,21 +44,31 @@ export const getLocation = (
   pos: Position,
 ): LocationState | undefined => grid[pos.row]?.[pos.col];
 
+/** Chebyshev (king-move) distance between two positions */
+export const chebyshevDistance = (a: Position, b: Position): number =>
+  Math.max(Math.abs(a.row - b.row), Math.abs(a.col - b.col));
+
 /**
  * Randomly place special locations on the grid.
  * Processes constrained locations first (those with pinned row/col),
  * then unconstrained ones into remaining open cells.
+ * Unconstrained locations must be at least MIN_SPECIAL_LOCATION_DISTANCE
+ * from all previously placed locations.
  */
 export const placeSpecialLocations = (
   dice: DiceProvider,
 ): Map<string, SpecialLocationType> => {
   const placed = new Map<string, SpecialLocationType>();
+  const placedPositions: Position[] = [];
   const posKey = (row: number, col: number): string => `${row},${col}`;
-  const isOccupied = (row: number, col: number): boolean =>
-    placed.has(posKey(row, col));
+
+  const isTooClose = (row: number, col: number): boolean =>
+    placedPositions.some((p) =>
+      chebyshevDistance(p, { row: row as Row, col: col as Col }) < MIN_SPECIAL_LOCATION_DISTANCE
+    );
 
   const pickRandom = (options: number[]): number => {
-    const index = ((dice.rollD4() - 1) + (dice.rollD4() - 1) * 4) % options.length;
+    const index = ((dice.rollD4() - 1) + (dice.rollD4() - 1) * 4 + (dice.rollD4() - 1) * 16) % options.length;
     return options[index]!;
   };
 
@@ -76,6 +86,7 @@ export const placeSpecialLocations = (
 
   for (const config of ordered) {
     const { placement } = config;
+    const isFullyPinned = placement.row !== null && placement.col !== null;
 
     const candidateRows =
       placement.row !== null
@@ -88,7 +99,9 @@ export const placeSpecialLocations = (
         : Array.from({ length: MAP_SIZE }, (_, i) => i);
 
     const openCells = reduce<number, Position[]>((acc, row) => {
-      const colsForRow = filter((col: number) => !isOccupied(row, col))(candidateCols);
+      const colsForRow = filter((col: number) =>
+        !placed.has(posKey(row, col)) && (isFullyPinned || !isTooClose(row, col))
+      )(candidateCols);
       const positions = map((col: number) => ({ row: row as Row, col: col as Col }))(colsForRow);
       for (const pos of positions) {
         acc.push(pos);
@@ -102,8 +115,12 @@ export const placeSpecialLocations = (
       );
     }
 
-    const chosen = openCells[pickRandom(Array.from({ length: openCells.length }, (_, i) => i))]!;
+    const chosenIndex = openCells.length === 1
+      ? 0
+      : pickRandom(Array.from({ length: openCells.length }, (_, i) => i));
+    const chosen = openCells[chosenIndex]!;
     placed.set(posKey(chosen.row, chosen.col), config.type);
+    placedPositions.push(chosen);
   }
 
   return placed;

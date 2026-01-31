@@ -11,8 +11,9 @@ import { findSpecialLocation } from "#game/grid.ts";
 import { createSequenceDice } from "#test-utils";
 import { STORY_MODE_LUCK } from "#game/constants.ts";
 
+// Mountains/docks fully pinned (0 dice). 4 unconstrained × 3 dice each = 12.
 const makeDice = () =>
-  createSequenceDice([1, 1, 2, 2, 3, 3, 4, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]);
+  createSequenceDice([1, 1, 2, 2, 3, 3, 4, 4, 1, 2, 3, 4]);
 
 // Mock localStorage for Deno
 const storage = new Map<string, string>();

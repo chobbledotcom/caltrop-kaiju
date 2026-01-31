@@ -4,13 +4,14 @@ import {
   getNeighbors,
   isAdjacent,
   isSamePosition,
+  chebyshevDistance,
   createGrid,
   findSpecialLocation,
   getLocation,
 } from "#game/grid.ts";
 import { createSequenceDice } from "#test-utils";
-import { MAP_SIZE, SPECIAL_LOCATIONS } from "#game/constants.ts";
-import type { Row, Col } from "#game/types.ts";
+import { MAP_SIZE, MIN_SPECIAL_LOCATION_DISTANCE, SPECIAL_LOCATIONS } from "#game/constants.ts";
+import type { Position, Row, Col } from "#game/types.ts";
 
 describe("isInBounds", () => {
   test("accepts positions within the 7x7 grid", () => {
@@ -92,8 +93,9 @@ describe("isSamePosition", () => {
 
 describe("createGrid", () => {
   // Provide enough dice for placement (each placement uses 2 dice for random selection)
+  // Mountains/docks are fully pinned (0 dice). 4 unconstrained × 3 dice each = 12.
   const makeDice = () =>
-    createSequenceDice([1, 1, 2, 2, 3, 3, 4, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]);
+    createSequenceDice([1, 1, 2, 2, 3, 3, 4, 4, 1, 2, 3, 4]);
 
   test("creates a 7x7 grid", () => {
     const { grid } = createGrid(makeDice());
@@ -120,18 +122,20 @@ describe("createGrid", () => {
     }
   });
 
-  test("mountains are placed in row 0", () => {
+  test("mountains are placed at top center (0,3)", () => {
     const { grid } = createGrid(makeDice());
     const pos = findSpecialLocation(grid, "mountains");
     expect(pos).toBeDefined();
     expect(pos!.row).toBe(0);
+    expect(pos!.col).toBe(3);
   });
 
-  test("docks are placed in row 6", () => {
+  test("docks are placed at bottom center (6,3)", () => {
     const { grid } = createGrid(makeDice());
     const pos = findSpecialLocation(grid, "docks");
     expect(pos).toBeDefined();
     expect(pos!.row).toBe(6);
+    expect(pos!.col).toBe(3);
   });
 
   test("docks start with 1 destruction", () => {
@@ -166,5 +170,49 @@ describe("createGrid", () => {
         }
       }
     }
+  });
+
+  test("unconstrained locations are at least MIN_SPECIAL_LOCATION_DISTANCE apart", () => {
+    const { grid } = createGrid(makeDice());
+    const specialPositions: Position[] = [];
+
+    for (const row of grid) {
+      for (const cell of row!) {
+        if (cell!.special) {
+          specialPositions.push(cell!.position);
+        }
+      }
+    }
+
+    // Check every pair of special locations
+    for (let i = 0; i < specialPositions.length; i++) {
+      for (let j = i + 1; j < specialPositions.length; j++) {
+        const dist = chebyshevDistance(specialPositions[i]!, specialPositions[j]!);
+        expect(dist).toBeGreaterThanOrEqual(MIN_SPECIAL_LOCATION_DISTANCE);
+      }
+    }
+  });
+});
+
+describe("chebyshevDistance", () => {
+  const pos = (row: number, col: number): Position =>
+    ({ row: row as Row, col: col as Col });
+
+  test("same position has distance 0", () => {
+    expect(chebyshevDistance(pos(3, 3), pos(3, 3))).toBe(0);
+  });
+
+  test("adjacent positions have distance 1", () => {
+    expect(chebyshevDistance(pos(3, 3), pos(3, 4))).toBe(1);
+    expect(chebyshevDistance(pos(3, 3), pos(4, 4))).toBe(1);
+  });
+
+  test("positions 2 apart horizontally have distance 2", () => {
+    expect(chebyshevDistance(pos(3, 3), pos(3, 5))).toBe(2);
+  });
+
+  test("diagonal distance uses the larger axis difference", () => {
+    expect(chebyshevDistance(pos(0, 0), pos(3, 6))).toBe(6);
+    expect(chebyshevDistance(pos(1, 1), pos(4, 3))).toBe(3);
   });
 });

@@ -50,6 +50,7 @@ export {
   STORY_MODE_LUCK,
   ALL_DIRECTIONS,
   OPPOSITE_DIRECTION,
+  MIN_SPECIAL_LOCATION_DISTANCE,
 } from "./constants.ts";
 
 // Dice
@@ -68,6 +69,7 @@ export {
   isAdjacent,
   isSamePosition,
   getLocation,
+  chebyshevDistance,
   placeSpecialLocations,
   createGrid,
   findSpecialLocation,
@@ -110,7 +112,8 @@ export {
 } from "./combat.ts";
 
 // Turn
-export { executeTurn } from "./turn.ts";
+export { planTurn, resolvePostMovement, completeTurn } from "./turn.ts";
+export type { TurnPlan } from "./turn.ts";
 
 // State
 export {
