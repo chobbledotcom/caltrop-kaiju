@@ -8,9 +8,9 @@ import {
   findSpecialLocation,
   getLocation,
 } from "#game/grid.ts";
-import { createSequenceDice } from "#game/dice.ts";
+import { createSequenceDice } from "#test-utils";
 import { MAP_SIZE, SPECIAL_LOCATIONS } from "#game/constants.ts";
-import type { Position, Row, Col } from "#game/types.ts";
+import type { Row, Col } from "#game/types.ts";
 
 describe("isInBounds", () => {
   test("accepts positions within the 7x7 grid", () => {

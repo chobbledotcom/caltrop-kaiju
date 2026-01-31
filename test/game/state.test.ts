@@ -8,9 +8,8 @@ import {
   isGameOver,
 } from "#game/state.ts";
 import { findSpecialLocation } from "#game/grid.ts";
-import { createSequenceDice } from "#game/dice.ts";
+import { createSequenceDice } from "#test-utils";
 import { STORY_MODE_LUCK } from "#game/constants.ts";
-import type { GameState } from "#game/types.ts";
 
 const makeDice = () =>
   createSequenceDice([1, 1, 2, 2, 3, 3, 4, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]);

@@ -1,3 +1,4 @@
+import { lazyRef } from "#fp";
 import { createRandomDice } from "./dice.ts";
 import {
   renderControls,
@@ -21,22 +22,23 @@ import type {
   PlayerAction,
 } from "./types.ts";
 
-let currentState: GameState | null = null;
+const [getState, setState] = lazyRef<GameState | null>(() => null);
 const dice = createRandomDice();
 
 const $ = (selector: string): HTMLElement | null =>
   document.querySelector(selector);
 
 const render = (): void => {
-  if (!currentState) return;
+  const state = getState();
+  if (!state) return;
 
   const gridEl = $("#grid-container");
   const controlsEl = $("#controls-container");
   const statusEl = $("#status-container");
 
-  if (gridEl) gridEl.innerHTML = renderGrid(currentState);
-  if (controlsEl) controlsEl.innerHTML = renderControls(currentState);
-  if (statusEl) statusEl.innerHTML = renderStatus(currentState);
+  if (gridEl) gridEl.innerHTML = renderGrid(state);
+  if (controlsEl) controlsEl.innerHTML = renderControls(state);
+  if (statusEl) statusEl.innerHTML = renderStatus(state);
 
   bindMoveButtons();
   bindNewGameButton();
@@ -50,12 +52,13 @@ const appendLog = (html: string): void => {
 };
 
 const handleMove = (action: PlayerAction): void => {
-  if (!currentState || isGameOver(currentState)) return;
+  const state = getState();
+  if (!state || isGameOver(state)) return;
 
-  const result = executeTurn(currentState, action, dice);
-  saveGame(currentState);
+  const result = executeTurn(state, action, dice);
+  saveGame(state);
 
-  appendLog(renderTurnLog(result.events, currentState.turnNumber));
+  appendLog(renderTurnLog(result.events, state.turnNumber));
   render();
 };
 
@@ -109,14 +112,16 @@ const showStartScreen = (): void => {
 
 const startGame = (difficulty: Difficulty): void => {
   clearSavedGame();
-  currentState = createGameState(difficulty, dice);
-  saveGame(currentState);
+  const state = createGameState(difficulty, dice);
+  setState(state);
+  saveGame(state);
   showGameScreen();
 };
 
 const continueGame = (): void => {
-  currentState = loadGame();
-  if (!currentState) {
+  const loaded = loadGame();
+  setState(loaded);
+  if (!loaded) {
     showStartScreen();
     return;
   }

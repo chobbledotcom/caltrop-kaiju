@@ -12,21 +12,6 @@ export const createRandomDice = (): DiceProvider => ({
   rollD4: (): D4 => (Math.floor(Math.random() * 4) + 1) as D4,
 });
 
-/** Create a DiceProvider that returns values from a predetermined sequence */
-export const createSequenceDice = (sequence: readonly D4[]): DiceProvider => {
-  let index = 0;
-  return {
-    rollD4: (): D4 => {
-      if (index >= sequence.length) {
-        throw new Error(
-          `Dice sequence exhausted after ${sequence.length} rolls`,
-        );
-      }
-      return sequence[index++]!;
-    },
-  };
-};
-
 /** Roll a single d4, applying disadvantage if needed */
 export const rollD4 = (
   dice: DiceProvider,

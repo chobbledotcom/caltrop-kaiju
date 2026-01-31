@@ -55,7 +55,6 @@ export {
 // Dice
 export {
   createRandomDice,
-  createSequenceDice,
   rollD4,
   toD44,
   lookupD44Direction,

@@ -3,6 +3,22 @@
  */
 
 import { clearEncryptionKeyCache } from "#lib/crypto.ts";
+import type { D4, DiceProvider } from "#game/types.ts";
+
+/** Create a DiceProvider that returns values from a predetermined sequence (test-only) */
+export const createSequenceDice = (sequence: readonly D4[]): DiceProvider => {
+  let index = 0;
+  return {
+    rollD4: (): D4 => {
+      if (index >= sequence.length) {
+        throw new Error(
+          `Dice sequence exhausted after ${sequence.length} rolls`,
+        );
+      }
+      return sequence[index++]!;
+    },
+  };
+};
 
 /**
  * Test encryption key (32 bytes base64-encoded)

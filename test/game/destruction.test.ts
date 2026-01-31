@@ -5,7 +5,7 @@ import {
   triggerSpecialEffect,
 } from "#game/destruction.ts";
 import { createGrid, findSpecialLocation, getLocation } from "#game/grid.ts";
-import { createSequenceDice } from "#game/dice.ts";
+import { createSequenceDice } from "#test-utils";
 import type { GameState, LocationState, Row, Col, DestructionLevel } from "#game/types.ts";
 
 const makeLocation = (

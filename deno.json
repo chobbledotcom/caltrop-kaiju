@@ -42,6 +42,7 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "noUncheckedIndexedAccess": true,
+    "lib": ["deno.ns", "deno.window", "dom", "dom.iterable"],
     "jsx": "react-jsx",
     "jsxImportSource": "#jsx"
   },

@@ -3,7 +3,6 @@ import { MAP_SIZE } from "./constants.ts";
 import { getLocation, isSamePosition } from "./grid.ts";
 import { getValidPlayerMoves } from "./movement.ts";
 import type {
-  BridgeState,
   CompassDirection,
   GameState,
   LocationState,

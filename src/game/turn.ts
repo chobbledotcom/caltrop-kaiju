@@ -21,12 +21,30 @@ import {
 import type {
   CompassDirection,
   DiceProvider,
+  DiceRoll,
   GameState,
   PlayerAction,
   Position,
   TurnEvent,
   TurnResult,
 } from "./types.ts";
+
+/** Roll a d4, applying disadvantage if applicable and consuming temporary disadvantage */
+const rollWithDisadvantage = (state: GameState, dice: DiceProvider): DiceRoll => {
+  const disadvantage = hasDisadvantage(state.player);
+  const roll = rollD4(dice, disadvantage);
+  consumeTemporaryDisadvantage(state.player);
+  return roll;
+};
+
+/** Apply a wound and push a death event if the player died. Returns true if dead. */
+const applyWoundOrDie = (state: GameState, events: TurnEvent[]): boolean => {
+  const died = applyWound(state.player);
+  if (died) {
+    events.push({ event: "player_killed", cause: "died_of_wounds" });
+  }
+  return died;
+};
 
 /**
  * Execute a full turn: player action → kaiju movement → resolve events.
@@ -51,18 +69,12 @@ export const executeTurn = (
     // Check wreckage on entering partially-destroyed location
     const playerLocation = getLocation(state.grid, state.player.position);
     if (playerLocation && playerLocation.destruction > 0 && playerLocation.destruction < 3) {
-      const disadvantage = hasDisadvantage(state.player);
-      const roll = rollD4(dice, disadvantage);
-      consumeTemporaryDisadvantage(state.player);
+      const roll = rollWithDisadvantage(state, dice);
       const outcome = resolveWreckage(roll.result);
       events.push({ event: "wreckage_roll", outcome });
 
-      if (outcome.type === "wounded") {
-        const died = applyWound(state.player);
-        if (died) {
-          events.push({ event: "player_killed", cause: "died_of_wounds" });
-          return finalizeTurn(state, action, "N", [], events);
-        }
+      if (outcome.type === "wounded" && applyWoundOrDie(state, events)) {
+        return finalizeTurn(state, action, "N", [], events);
       }
     }
   }
@@ -115,9 +127,7 @@ export const executeTurn = (
     // Check for sighting (kaiju path + player position)
     const sightingType = detectSighting(state.player.position, kaijuPath);
     if (sightingType) {
-      const disadvantage = hasDisadvantage(state.player);
-      const roll = rollD4(dice, disadvantage);
-      consumeTemporaryDisadvantage(state.player);
+      const roll = rollWithDisadvantage(state, dice);
       const sightingEvent = resolveSighting(sightingType, roll.result, state.player.sightingCount);
       state.player.sightingCount += 1;
       events.push({ event: "sighting", detail: sightingEvent });
@@ -129,12 +139,8 @@ export const executeTurn = (
         return finalizeTurn(state, action, kaijuDirection, kaijuPath, events);
       }
 
-      if (wasWoundedBySighting(sightingEvent)) {
-        const died = applyWound(state.player);
-        if (died) {
-          events.push({ event: "player_killed", cause: "died_of_wounds" });
-          return finalizeTurn(state, action, kaijuDirection, kaijuPath, events);
-        }
+      if (wasWoundedBySighting(sightingEvent) && applyWoundOrDie(state, events)) {
+        return finalizeTurn(state, action, kaijuDirection, kaijuPath, events);
       }
 
       if (didLearnWeakness(sightingEvent)) {
@@ -146,9 +152,7 @@ export const executeTurn = (
     // Check if kaiju caught the player
     const caught = kaijuPath.some((pos) => isSamePosition(pos, state.player.position));
     if (caught) {
-      const disadvantage = hasDisadvantage(state.player);
-      const roll = rollD4(dice, disadvantage);
-      consumeTemporaryDisadvantage(state.player);
+      const roll = rollWithDisadvantage(state, dice);
       const outcome = resolveSearchEncounter(roll.result);
       events.push({ event: "search_encounter", outcome });
 
@@ -230,9 +234,7 @@ const resolveVictory = (
   );
 
   if (passesPlayer && state.player.status !== "dead") {
-    const disadvantage = hasDisadvantage(state.player);
-    const roll = rollD4(dice, disadvantage);
-    consumeTemporaryDisadvantage(state.player);
+    const roll = rollWithDisadvantage(state, dice);
 
     // Use perilous sighting table for final encounter
     const outcome = resolvePerilous(roll.result);
@@ -247,9 +249,7 @@ const resolveVictory = (
     }
 
     if (outcome.type === "wounded_learned" || outcome.type === "wounded_no_learn") {
-      const died = applyWound(state.player);
-      if (died) {
-        events.push({ event: "player_killed", cause: "died_of_wounds" });
+      if (applyWoundOrDie(state, events)) {
         state.phase = { phase: "defeat", cause: "died_of_wounds" };
         return events;
       }

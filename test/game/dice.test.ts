@@ -1,14 +1,14 @@
 import { describe, test, expect } from "#test-compat";
 import {
-  createSequenceDice,
   createRandomDice,
   rollD4,
   toD44,
   lookupD44Direction,
   rollKaijuDirection,
 } from "#game/dice.ts";
+import { createSequenceDice } from "#test-utils";
 import { D44_DIRECTION_TABLE } from "#game/constants.ts";
-import type { D4, D44 } from "#game/types.ts";
+import type { D44 } from "#game/types.ts";
 
 describe("createSequenceDice", () => {
   test("returns values from the sequence in order", () => {
