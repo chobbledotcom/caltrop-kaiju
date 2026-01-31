@@ -17,6 +17,8 @@
     "jsx": "react-jsx",
     "jsxImportSource": "#jsx",
     "paths": {
+      "#game": ["./src/game/index.ts"],
+      "#game/*": ["./src/game/*"],
       "#fp": ["./src/fp/index.ts"],
       "#fp/*": ["./src/fp/*"],
       "#test-utils": ["./src/test-utils/index.ts"],

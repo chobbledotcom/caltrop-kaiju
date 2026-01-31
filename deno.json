@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "exports": "./src/index.ts",
   "tasks": {
+    "build": "deno run -A scripts/build.ts",
     "start": "deno run --allow-net --allow-env --allow-read src/index.ts",
     "test": "deno run -A scripts/run-tests.ts",
     "test:coverage": "deno run -A scripts/run-tests.ts --coverage",
@@ -15,6 +16,8 @@
     "precommit": "deno task typecheck && deno task lint && deno task cpd && deno task test:coverage"
   },
   "imports": {
+    "#game": "./src/game/index.ts",
+    "#game/": "./src/game/",
     "#fp": "./src/fp/index.ts",
     "#fp/": "./src/fp/",
     "#test-utils": "./src/test-utils/index.ts",
@@ -39,6 +42,7 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "noUncheckedIndexedAccess": true,
+    "lib": ["deno.ns", "deno.window", "dom", "dom.iterable"],
     "jsx": "react-jsx",
     "jsxImportSource": "#jsx"
   },
