@@ -1,4 +1,4 @@
-import { filter, map, reduce } from "#fp";
+import { compact, filter, flatMap, map, pipe } from "#fp";
 import { ALL_DIRECTIONS, DIRECTION_DELTAS, MAP_SIZE, MIN_SPECIAL_LOCATION_DISTANCE, SPECIAL_LOCATIONS } from "./constants.ts";
 import type {
   Col,
@@ -15,18 +15,18 @@ export const isInBounds = (row: number, col: number): boolean =>
   row >= 0 && row < MAP_SIZE && col >= 0 && col < MAP_SIZE;
 
 /** Get all valid adjacent positions (8 directions) */
-export const getNeighbors = (pos: Position): Position[] => {
-  const neighbors: Position[] = [];
-  for (const dir of ALL_DIRECTIONS) {
-    const delta = DIRECTION_DELTAS[dir];
-    const newRow = pos.row + delta.dRow;
-    const newCol = pos.col + delta.dCol;
-    if (isInBounds(newRow, newCol)) {
-      neighbors.push({ row: newRow as Row, col: newCol as Col });
-    }
-  }
-  return neighbors;
-};
+export const getNeighbors = (pos: Position): Position[] =>
+  pipe(
+    map((dir: (typeof ALL_DIRECTIONS)[number]) => {
+      const delta = DIRECTION_DELTAS[dir];
+      const newRow = pos.row + delta.dRow;
+      const newCol = pos.col + delta.dCol;
+      return isInBounds(newRow, newCol)
+        ? { row: newRow as Row, col: newCol as Col }
+        : null;
+    }),
+    compact,
+  )([...ALL_DIRECTIONS]);
 
 /** Check if two positions are adjacent (including diagonals) */
 export const isAdjacent = (a: Position, b: Position): boolean =>
@@ -88,26 +88,22 @@ export const placeSpecialLocations = (
     const { placement } = config;
     const isFullyPinned = placement.row !== null && placement.col !== null;
 
-    const candidateRows =
-      placement.row !== null
-        ? [placement.row]
-        : Array.from({ length: MAP_SIZE }, (_, i) => i);
+    const rangeOrPin = (pin: number | null): number[] =>
+      pin !== null ? [pin] : Array.from({ length: MAP_SIZE }, (_, i) => i);
 
-    const candidateCols =
-      placement.col !== null
-        ? [placement.col]
-        : Array.from({ length: MAP_SIZE }, (_, i) => i);
+    const candidateRows = rangeOrPin(placement.row);
+    const candidateCols = rangeOrPin(placement.col);
 
-    const openCells = reduce<number, Position[]>((acc, row) => {
-      const colsForRow = filter((col: number) =>
-        !placed.has(posKey(row, col)) && (isFullyPinned || !isTooClose(row, col))
-      )(candidateCols);
-      const positions = map((col: number) => ({ row: row as Row, col: col as Col }))(colsForRow);
-      for (const pos of positions) {
-        acc.push(pos);
-      }
-      return acc;
-    }, [])(candidateRows);
+    const openCells = pipe(
+      flatMap((row: number) =>
+        pipe(
+          filter((col: number) =>
+            !placed.has(posKey(row, col)) && (isFullyPinned || !isTooClose(row, col))
+          ),
+          map((col: number) => ({ row: row as Row, col: col as Col })),
+        )(candidateCols)
+      ),
+    )(candidateRows);
 
     if (openCells.length === 0) {
       throw new Error(

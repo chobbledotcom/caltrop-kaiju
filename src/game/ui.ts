@@ -36,6 +36,12 @@ const $ = (selector: string): HTMLElement | null =>
 const animationPause = (ms: number): Promise<void> =>
   new Promise((resolve) => { setTimeout(resolve, ms); });
 
+/** Run a callback with the #app element if it exists */
+const withAppEl = (fn: (el: HTMLElement) => void): void => {
+  const appEl = $("#app");
+  if (appEl) fn(appEl);
+};
+
 const render = (): void => {
   const state = getState();
   if (!state) return;
@@ -120,10 +126,7 @@ const bindNewGameButton = (): void => {
   }
 };
 
-const showStartScreen = (): void => {
-  const appEl = $("#app");
-  if (!appEl) return;
-
+const showStartScreen = (): void => withAppEl((appEl) => {
   const hasSave = hasSavedGame();
 
   appEl.innerHTML = `
@@ -140,7 +143,7 @@ const showStartScreen = (): void => {
   $("#start-normal")?.addEventListener("click", () => startGame("normal"));
   $("#start-story")?.addEventListener("click", () => startGame("story"));
   $("#continue-game")?.addEventListener("click", () => continueGame());
-};
+});
 
 const startGame = (difficulty: Difficulty): void => {
   clearSavedGame();
@@ -160,10 +163,7 @@ const continueGame = (): void => {
   showGameScreen();
 };
 
-const showGameScreen = (): void => {
-  const appEl = $("#app");
-  if (!appEl) return;
-
+const showGameScreen = (): void => withAppEl((appEl) => {
   appEl.innerHTML = `
     <div class="game-screen">
       <div id="status-container"></div>
@@ -177,7 +177,7 @@ const showGameScreen = (): void => {
     </div>`;
 
   render();
-};
+});
 
 /** Initialize the app */
 export const init = (): void => {

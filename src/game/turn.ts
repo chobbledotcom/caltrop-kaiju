@@ -1,4 +1,5 @@
-import { KAIJU_SPEED_PHASE1, KAIJU_SPEED_PHASE2 } from "./constants.ts";
+import { map } from "#fp";
+import { KAIJU_SPEED_PHASE1, KAIJU_SPEED_PHASE2, MAP_SIZE } from "./constants.ts";
 import {
   applyWound,
   consumeTemporaryDisadvantage,
@@ -7,7 +8,7 @@ import {
   resolveWreckage,
 } from "./combat.ts";
 import { rollD4, rollKaijuDirection } from "./dice.ts";
-import { applyKaijuDestruction } from "./destruction.ts";
+import { applyKaijuDestruction, bridgeSideForCol } from "./destruction.ts";
 import { getLocation, isSamePosition } from "./grid.ts";
 import { getHuntDirection, moveInLine } from "./movement.ts";
 import {
@@ -98,11 +99,9 @@ export const planTurn = (
     state.bridge.mustChoose &&
     action.type === "move"
   ) {
-    const CENTER_COL = 3;
-    if (state.player.position.col < CENTER_COL) {
-      state.bridge = { collapsed: true, playerSide: "west" };
-    } else if (state.player.position.col > CENTER_COL) {
-      state.bridge = { collapsed: true, playerSide: "east" };
+    const side = bridgeSideForCol(state.player.position.col);
+    if (side) {
+      state.bridge = { collapsed: true, playerSide: side };
     }
     // Still on center? Stay in mustChoose state
   }
@@ -246,21 +245,15 @@ const transitionToSearchPhase = (
  * Resolve victory: kaiju flees south, causing destruction.
  * If it passes through the player's square, resolve a final perilous encounter.
  */
-const resolveVictory = (
-  state: GameState,
-  dice: DiceProvider,
-): TurnEvent[] => {
-  const events: TurnEvent[] = [];
-  events.push({ event: "kaiju_flees" });
+const resolveVictory = (state: GameState, dice: DiceProvider): TurnEvent[] => {
+  const events: TurnEvent[] = [{ event: "kaiju_flees" }];
 
   // Kaiju flees directly south from current position to the bottom of the map
   const kaijuRow = state.kaiju.position.row;
   const kaijuCol = state.kaiju.position.col;
-  const fleePath: Position[] = [];
-
-  for (let row = kaijuRow + 1; row < 7; row++) {
-    fleePath.push({ row: row as Position["row"], col: kaijuCol });
-  }
+  const fleePath: Position[] = map(
+    (row: number) => ({ row: row as Position["row"], col: kaijuCol }),
+  )(Array.from({ length: MAP_SIZE - 1 - kaijuRow }, (_, i) => kaijuRow + 1 + i));
 
   for (const pos of fleePath) {
     events.push(...applyKaijuDestruction(state, pos));

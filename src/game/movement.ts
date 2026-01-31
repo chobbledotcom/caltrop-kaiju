@@ -1,3 +1,4 @@
+import { compact, map, pipe } from "#fp";
 import { DIRECTION_DELTAS, MAP_SIZE } from "./constants.ts";
 import { isInBounds } from "./grid.ts";
 import type {
@@ -102,29 +103,29 @@ export const getValidPlayerMoves = (
   bridgePlayerSide: "west" | "east" | null,
 ): { direction: CompassDirection; target: Position }[] => {
   const CENTER_COL = Math.floor(MAP_SIZE / 2);
-  const moves: { direction: CompassDirection; target: Position }[] = [];
 
-  for (const [dir, delta] of Object.entries(DIRECTION_DELTAS)) {
-    const newRow = position.row + delta.dRow;
-    const newCol = position.col + delta.dCol;
+  return pipe(
+    map(([dir, delta]: [string, { dRow: number; dCol: number }]) => {
+      const newRow = position.row + delta.dRow;
+      const newCol = position.col + delta.dCol;
 
-    if (!isInBounds(newRow, newCol)) continue;
+      if (!isInBounds(newRow, newCol)) return null;
 
-    const location = grid[newRow]?.[newCol];
-    if (!location || location.destruction >= 3) continue;
+      const location = grid[newRow]?.[newCol];
+      if (!location || location.destruction >= 3) return null;
 
-    if (bridgeCollapsed && bridgePlayerSide !== null) {
-      const crossingLine =
-        (position.col <= CENTER_COL && newCol > CENTER_COL) ||
-        (position.col > CENTER_COL && newCol <= CENTER_COL);
-      if (crossingLine) continue;
-    }
+      if (bridgeCollapsed && bridgePlayerSide !== null) {
+        const crossingLine =
+          (position.col <= CENTER_COL && newCol > CENTER_COL) ||
+          (position.col > CENTER_COL && newCol <= CENTER_COL);
+        if (crossingLine) return null;
+      }
 
-    moves.push({
-      direction: dir as CompassDirection,
-      target: { row: newRow as Row, col: newCol as Col },
-    });
-  }
-
-  return moves;
+      return {
+        direction: dir as CompassDirection,
+        target: { row: newRow as Row, col: newCol as Col },
+      };
+    }),
+    compact,
+  )(Object.entries(DIRECTION_DELTAS));
 };

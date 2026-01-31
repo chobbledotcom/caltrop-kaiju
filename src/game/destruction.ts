@@ -1,3 +1,4 @@
+import { compact, flatMap } from "#fp";
 import { MAP_SIZE, TELECOM_EXTRA_SEARCH_TURNS } from "./constants.ts";
 import { getLocation, getNeighbors, isSamePosition } from "./grid.ts";
 import type {
@@ -98,27 +99,31 @@ const applyAreaDestruction = (
   amount: number,
   excludeSpecial: string,
   cascadeOnlyFirstDamage: boolean,
-): TurnEvent[] => {
-  const events: TurnEvent[] = [];
-
-  for (const pos of [position, ...getNeighbors(position)]) {
-    const loc = locationAt(state, pos);
-    if (!loc) continue;
-
+): TurnEvent[] =>
+  flatMap(({ pos, loc }: { pos: Position; loc: LocationState }): TurnEvent[] => {
     const prevDestruction = loc.destruction;
     const { newLevel, wasFullyDestroyed } = addDestruction(loc, amount);
-    events.push({ event: "destruction", position: pos, newLevel });
+    const events: TurnEvent[] = [
+      { event: "destruction", position: pos, newLevel },
+    ];
 
     checkPlayerDeathByDestruction(state, pos, wasFullyDestroyed, events);
 
-    const shouldCascade = loc.special && !loc.specialTriggered && loc.special !== excludeSpecial;
+    const shouldCascade = loc.special && !loc.specialTriggered &&
+      loc.special !== excludeSpecial;
     if (shouldCascade && (!cascadeOnlyFirstDamage || prevDestruction === 0)) {
       events.push(...triggerSpecialEffect(state, pos));
     }
-  }
 
-  return events;
-};
+    return events;
+  })(
+    compact(
+      [position, ...getNeighbors(position)].map((pos) => {
+        const loc = locationAt(state, pos);
+        return loc ? { pos, loc } : null;
+      }),
+    ),
+  );
 
 /** Nuclear meltdown: fully destroy this location and all neighbors */
 const applyNuclearMeltdown = (state: GameState, position: Position): TurnEvent[] =>
@@ -136,19 +141,20 @@ const applyTelecomDestroyed = (state: GameState): void => {
   // If still in finding_kaiju phase, the effect is stored and applied when searching begins
 };
 
+/** Determine which side of the bridge a column falls on, or null if on the center */
+export const bridgeSideForCol = (col: number): "west" | "east" | null => {
+  const CENTER_COL = Math.floor(MAP_SIZE / 2);
+  if (col < CENTER_COL) return "west";
+  if (col > CENTER_COL) return "east";
+  return null;
+};
+
 /** Bridge collapse: split the map, player must pick a side */
 const applyBridgeCollapse = (state: GameState): void => {
-  const CENTER_COL = Math.floor(MAP_SIZE / 2);
-  const playerCol = state.player.position.col;
-
-  if (playerCol < CENTER_COL) {
-    state.bridge = { collapsed: true, playerSide: "west" };
-  } else if (playerCol > CENTER_COL) {
-    state.bridge = { collapsed: true, playerSide: "east" };
-  } else {
-    // Player is on the center column — must choose on next move
-    state.bridge = { collapsed: true, playerSide: null, mustChoose: true };
-  }
+  const side = bridgeSideForCol(state.player.position.col);
+  state.bridge = side
+    ? { collapsed: true, playerSide: side }
+    : { collapsed: true, playerSide: null, mustChoose: true };
 };
 
 /** Apply single-point destruction to a location, returning events for damage, death, and cascades */
