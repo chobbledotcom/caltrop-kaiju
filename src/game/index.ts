@@ -1,3 +1,4 @@
+// Types
 export type {
   Col,
   Row,
@@ -36,6 +37,7 @@ export type {
   DiceProvider,
 } from "./types.ts";
 
+// Constants
 export {
   MAP_SIZE,
   SPECIAL_LOCATIONS,
@@ -49,3 +51,74 @@ export {
   ALL_DIRECTIONS,
   OPPOSITE_DIRECTION,
 } from "./constants.ts";
+
+// Dice
+export {
+  createRandomDice,
+  createSequenceDice,
+  rollD4,
+  toD44,
+  lookupD44Direction,
+  rollKaijuDirection,
+} from "./dice.ts";
+
+// Grid
+export {
+  isInBounds,
+  getNeighbors,
+  isAdjacent,
+  isSamePosition,
+  getLocation,
+  placeSpecialLocations,
+  createGrid,
+  findSpecialLocation,
+} from "./grid.ts";
+
+// Movement
+export {
+  bounceDirection,
+  deltaToDirection,
+  moveInLine,
+  getHuntDirection,
+  getValidPlayerMoves,
+} from "./movement.ts";
+
+// Sighting
+export {
+  detectSighting,
+  resolvePerilous,
+  resolveSafer,
+  resolveSighting,
+  didLearnWeakness,
+  wasWoundedBySighting,
+  wasKilledBySighting,
+} from "./sighting.ts";
+
+// Destruction
+export {
+  addDestruction,
+  triggerSpecialEffect,
+  applyKaijuDestruction,
+} from "./destruction.ts";
+
+// Combat
+export {
+  resolveWreckage,
+  applyWound,
+  resolveSearchEncounter,
+  hasDisadvantage,
+  consumeTemporaryDisadvantage,
+} from "./combat.ts";
+
+// Turn
+export { executeTurn } from "./turn.ts";
+
+// State
+export {
+  createGameState,
+  saveGame,
+  loadGame,
+  clearSavedGame,
+  hasSavedGame,
+  isGameOver,
+} from "./state.ts";
